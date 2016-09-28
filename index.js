@@ -186,36 +186,8 @@ function setSwaggerPaths() {
     if (newSwaggerDocument.paths['/' + tempPath][postmanDocument.requests[request].method.toLowerCase()] === undefined) {
       newSwaggerDocument.paths['/' + tempPath][postmanDocument.requests[request].method.toLowerCase()] = {};
     } else {
-
+      //TODO(jcarter): Logic to gracefully merge requests and check for different response code types.
     }
-
-    //console.log('test: ', typeof postmanDocument.requests[request].tests);
-
-    if (typeof postmanDocument.requests[request].tests === 'string') {
-
-      fs.writeFileSync('./tmp/file.js', postmanDocument.requests[request].tests, 'utf8');
-    
-      if (count === 0) {
-        count++;
-        console.log('FILE WRITTEN!');
-        var responseSchema = require('./tmp/file.js');
-        console.log('response scheam: ', responseSchema);
-      }
-      // var one = 0;
-      // var toplevel = uglifyjs.parse(postmanDocument.requests[request].tests);
-      // var treeWalker = new uglifyjs.TreeWalker(function(node){
-      //   if (node instanceof uglifyjs.AST_VarDef && node.start.value === 'responseSchema') {
-      //       var p = treeWalker.parent();
-      //       if (p instanceof uglifyjs.AST_Definitions) {
-      //           console.log("Found string: %s at %d,%d", JSON.stringify(node));
-      //       }
-      //   }
-      // });
-      // toplevel.walk(treeWalker);
-    }
-
-    //add new path properties if they dont exist, make smart choice if to overwrite
-
 
     /*
 			id: "03168e23-32a3-5c23-b0b1-b94bcfddcada",
