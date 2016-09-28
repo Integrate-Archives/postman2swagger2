@@ -9,7 +9,8 @@ Program
   .version(Package.version)
   .description('Convert API descriptions from Postman to Swagger.')
   .option('-e, --environment <environment>', 'Specifies Postman Environment to use for dynamic values in Postman file.')
-  .option('-h, --host <host>', 'Specifies global host.')  
+  .option('-h, --host <host>', 'Specifies global host.')
+  .option('-t, --tests', 'Pull data in from Postman tests.')  
   .arguments('<URL|filename>')
   .action(main)
   .parse(process.argv);
@@ -18,6 +19,7 @@ function main(url) {
     Converter.convert({
         url: url,
         environment: Program.environment || null,
-        host: Program.host || null
+        host: Program.host || null,
+        useTests: Program.tests
     });
 }
