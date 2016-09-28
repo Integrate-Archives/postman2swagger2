@@ -1,0 +1,29 @@
+{
+  "name": "postman2swagger2",
+  "version": "1.0.0",
+  "description": "Transform Postman JSON to Swagger v2 JSON",
+  "preferGlobal": true,
+  "main": "index.js",
+  "directories": {
+    "bin": "./bin"
+  },
+  "scripts": {
+    "test": "test command"
+  },
+  "repository": {
+    "type": "git",
+    "url": "urlhere"
+  },
+  "keywords": [
+    "keywords"
+  ],
+  "author": "Jacob Carter",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "*",
+    "bluebird": "*",
+    "request": "*",
+    "lodash": "*",
+    "deep-sort-object": "*"
+  }
+}

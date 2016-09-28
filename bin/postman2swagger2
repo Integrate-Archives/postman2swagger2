@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+'use strict';
+
+var Package = require(__dirname + '/../package.json');
+var Program = require('commander');
+var Converter = require('..');
+
+Program
+  .version(Package.version)
+  .description('Convert API descriptions from Postman to Swagger.')
+  .option('-e, --environment <environment>', 'Specifies Postman Environment to use for dynamic values in Postman file.')
+  .option('-h, --host <host>', 'Specifies global host.')  
+  .arguments('<URL|filename>')
+  .action(main)
+  .parse(process.argv);
+
+function main(url) {
+    Converter.convert({
+        url: url,
+        environment: Program.environment || null,
+        host: Program.host || null
+    });
+}
