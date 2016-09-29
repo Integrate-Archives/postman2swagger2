@@ -9,7 +9,7 @@ Program
   .version(Package.version)
   .description('Convert API descriptions from Postman to Swagger.')
   .option('-e, --environment <environment>', 'Specifies Postman Environment to use for dynamic values in Postman file.')
-  .option('-h, --host <host>', 'Specifies global host.')
+  .option('--host <host>', 'Specifies global host.')
   .option('-o, --out <out>', 'Specify the path and filename you want to output your swagger document to. Defaults to "./swagger2.json"')
   .arguments('<URL|filename>')
   .action(main)

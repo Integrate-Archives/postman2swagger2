@@ -14,7 +14,7 @@ $ npm install -g postman2swagger2
 ## Usage
 
 ```bash
-$ postman2swagger2 --help
+$ postman2swagger2 -h
 
   Usage: postman2swagger2 [options] <URL|filename>
 
@@ -25,7 +25,7 @@ $ postman2swagger2 --help
     -h, --help                       output usage information
     -V, --version                    output the version number
     -e, --environment <environment>  Specifies Postman Environment to use for dynamic values in Postman file.
-    -h, --host <host>                Specifies global host.
+    --host <host>                    Specifies global host.
     -o, --out <out>                  Specify the path and filename you want to output your swagger document to. Defaults to "./swagger2.json"
 ```
 

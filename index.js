@@ -136,7 +136,7 @@ function findBaseUrl() {
   for (var request = 0; request < postmanDocument.requests.length; request++) {
     requestUrls.push(postmanDocument.requests[request].url);
   }
-  commonUrl = sharedSubString(requestUrls);
+  commonUrl = sharedSegments(requestUrls);
   return commonUrl;
 }
 
@@ -191,17 +191,13 @@ function setSwaggerPaths() {
     tempPath = tempPath.split('?')[0];
 
     //Checking to see if entry already exists for this path.
-    if (newSwaggerDocument.paths['/' + tempPath] === undefined) {
-      newSwaggerDocument.paths['/' + tempPath] = {};
-    } else {
-
-      //TODO(jcarter): Need to do a graceful merge of information.
-      continue;
+    if (newSwaggerDocument.paths[tempPath] === undefined) {
+      newSwaggerDocument.paths[tempPath] = {};
     }
 
     //Checking to see if method entry already exists for this path.
-    if (newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()] === undefined) {
-      newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()] = {};
+    if (newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()] === undefined) {
+      newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()] = {};
     } else {
   
       //TODO(jcarter): Need to do a graceful merge of information.
@@ -209,11 +205,11 @@ function setSwaggerPaths() {
     }
 
     //TODO(jcarter): Set tags option in CLI?
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].tags = [];
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].summary = activePostmanRequest.description;
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].operationId = activePostmanRequest.name + '_';
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces = [];
-    //newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].consumes = [];
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].tags = [];
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].summary = activePostmanRequest.description;
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].operationId = activePostmanRequest.name + '_';
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].produces = [];
+    //newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].consumes = [];
 
     //Get content type if available.
     activePostmanRequest.headers.replace('\n', '').replace('\r', '');
@@ -221,12 +217,12 @@ function setSwaggerPaths() {
     var contentTypeIndex = headersArray.indexOf("Content-Type:");
     if (contentTypeIndex >= 0) {
       var contentTypeValue = headersArray[(contentTypeIndex + 1)];
-      newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces.push(contentTypeValue);
-      //newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].consumes.push(contentTypeValue); 
+      newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].produces.push(contentTypeValue);
+      //newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].consumes.push(contentTypeValue); 
     }
 
     //Set parameters if any were found in path.
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].parameters = [];
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].parameters = [];
     if (Object.keys(tempParams).length > 0) {
       for (var param in tempParams) {
         var parameterObject = {
@@ -236,121 +232,32 @@ function setSwaggerPaths() {
           'x-is-map': false,
           type: 'string'
         }
-        newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].parameters.push(parameterObject);
+        newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].parameters.push(parameterObject);
       }
     }
 
     //Set response on swagger JSON.
     //TODO(jcarter): I would really like to parse the test JS file in the Postman JSON to get reponse body and status code.
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].responses = {
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].responses = {
       '200': {
         description: ''
       }
     };
     
     //Set security property on swagger JSON.
-    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].security = [];
-
-    function buildPropertiesObject(obj) {
-
-      /* Base object created */
-      /*
-      {
-        type:
-        !example
-        !format
-        !properties
-        !items
-      }
-
-
-      */
-      var tempObj = {};
-
-      //Looping through keys of object to build properties object.
-      for (var key in obj) {
-
-        //Setting string type.
-        if (typeof obj[key] === 'string') {
-          tempObj.key = {
-            type: 'string',
-            example: obj[key]
-          }
-
-        //Setting number type.
-        } else if (typeof obj[key] === 'number') {
-          tempObj.key = {
-            type: 'integer',
-            format: 'int64'
-          }
-
-        //Setting null type.
-        } else if (typeof obj[key] === null) {
-          tempObj.key = {
-            type: 'null'
-          }
-  
-        //Setting array and object type.
-        } else if (typeof obj[key] === 'object') {
-
-          //Object vs. Array check.
-          if (obj[key].length === undefined) {
-
-            //If object call buildPropertiesObject recursively.
-            tempObj.key = {
-              type: 'object',
-              properties: buildPropertiesObject(obj[key]) 
-            }
-          } else {
-            tempObj.key = {
-              type: 'array',
-              items: {}
-            }
-
-            //Setting different array item types.
-            var itemType = typeof obj[key][0];
-
-            //Checking if array items are objects
-            if (itemType === 'object' && obj[key].length === undefined) {
-              tempObj.key.items = {
-                type: 'object',
-                properties: buildPropertiesObject(obj[key][0]) 
-              };
-
-            //Checking if array of strings
-            } else if (itemType === 'string') {
-            tempObj.key = {
-              type: 'string',
-              example: obj[key][0]
-            }
-
-          //Checking if array of numbers
-          } else if (itemType === 'number') {
-            tempObj.key = {
-              type: 'integer',
-              example: 'int64'
-            }
-          } else if (itemType === 'null') {
-            tempObj.key = {
-              type: 'null'
-            }
-          }
-        }
-      }
-      return tempObj;
-    }
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].security = [];
 
     //Set body parameter.
     //TODO(jcarter): Need to support other content types beside application/json.
     /**
      * Assumptions being made:
-     * All parent level properties are required.
+     * All properties are required.
      * No enums or descriptions for any properties are created.
+     * Multiple types not supported at this time.
      */
-    if (activePostmanRequest.rawModeData && (newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces.indexOf('application/json') >= 0)) {
+    if (activePostmanRequest.rawModeData &&
+        (newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].produces.indexOf('application/json') >= 0)) {
       var bodyData = JSON.parse(activePostmanRequest.rawModeData);
-      console.log('object keys ', Object.keys(bodyData));
-      buildPropertiesObject(bodyData);
 
       /*
       array
@@ -369,60 +276,20 @@ function setSwaggerPaths() {
       A JSON string.
       */
       var bodyParam = {
-          "in": "body",
-          "name": "body",
-          "description": "",
-          "required": true,
-          "schema": {
-            "type": "object",
-            "required": Object.keys(bodyData),
-            "properties": {
-                "id": {
-                    "type": "integer",
-                    "format": "int64"
-                },
-                "category": {
-                    "$ref": "#/definitions/Category"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "doggie"
-                },
-                "photoUrls": {
-                    "type": "array",
-                    "xml": {
-                        "name": "photoUrl",
-                        "wrapped": true
-                    },
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "tags": {
-                    "type": "array",
-                    "xml": {
-                        "name": "tag",
-                        "wrapped": true
-                    },
-                    "items": {
-                        "$ref": "#/definitions/Tag"
-                    }
-                },
-                "status": {
-                    "type": "string",
-                    "description": "pet status in the store",
-                    "enum": [
-                        "available",
-                        "pending",
-                        "sold"
-                    ]
-                }
-            },
-            "xml": {
-                "name": "Pet"
-            }
-        }
+        "in": "body",
+        "name": "body",
+        "description": "",
+        "required": true,
+        // "schema": {
+        //   "type": "object",
+        //   "required": Object.keys(bodyData),
+        //   "properties": buildPropertiesObject(bodyData)
+        // }
+        "schema": buildSchemaObject(bodyData, true)
+        
       }
+
+      newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].parameters.push(bodyParam);
     }
   }
 }
@@ -433,7 +300,9 @@ function setSwaggerPaths() {
  * Find the longest shared sub string to strip out common parts of request URLs
  * 
  * @param {array.<string>} array An array of all request URLs.
+ * @return {string} String representing shared URI for all requests.
  */
+//Abandoned this and switched to checking common segments.
 function sharedSubString(array){
   var sortedArray = array.concat().sort();
   var firstString = sortedArray[0];
@@ -444,6 +313,32 @@ function sharedSubString(array){
     i++;
   }
   return firstString.substring(0, (i - 1));
+}
+
+/**
+ * Find the longest shared portion of the URI.
+ * 
+ * @param {array.<string>} array An array of all request URLs.
+ * @return {string} String representing shared URI for all requests.
+ */
+function sharedSegments(array){
+  var sortedArray = array.concat().sort();
+  for (var uri = 0; uri < sortedArray.length; uri++) {
+    sortedArray[uri] = sortedArray[uri].split('/');
+  }
+  var firstSegmentArray = sortedArray[0];
+  var lastSegmentArray = sortedArray[sortedArray.length-1];
+  var segment = 0;
+  while (firstSegmentArray[segment] === lastSegmentArray[segment]) {
+    segment++;
+  }
+
+  //If segment to splice is undefined, go back one before returning commonUrl.
+  var spliceCount = segment;
+  if (!firstSegmentArray[segment]) {
+    spliceCount = segment -1;
+  }
+  return firstSegmentArray.splice(0, spliceCount).join('/');
 }
 
 /**
@@ -465,4 +360,85 @@ function getUrlVars(path) {
     } else {
       return false;
     }
+}
+
+function buildSchemaObject(obj, initialLoop) {
+
+  /* Base object created */
+  /*
+  {
+    type:
+    !example
+    !format
+    !properties
+    !required
+    !items
+  }
+  */
+  var tempObj = {};
+
+  //Looping through keys of object to build properties object.
+  for (var key in obj) {
+
+    //Setting string type.
+    if (typeof obj[key] === 'string') {
+      tempObj[key] = {
+        type: 'string',
+        example: obj[key]
+      }
+
+    //Setting number type.
+    } else if (typeof obj[key] === 'number') {
+      tempObj[key] = {
+        type: 'integer',
+        format: 'int64'
+      }
+
+    //Setting null type.
+    } else if (obj[key] === null) {
+      tempObj[key] = {
+        type: 'null'
+      }
+
+    //Setting array and object type.
+    } else if (typeof obj[key] === 'object') {
+
+      //Set schema for object.
+      if (obj[key].length === undefined) {
+
+        //If object call buildSchemaObject recursively.
+        tempObj[key] = {
+          type: 'object',
+          properties: buildSchemaObject(obj[key]),
+          required:  Object.keys(obj[key])
+        }
+
+      //Set schema for array.
+      } else {
+        tempObj[key] = {
+          type: 'array',
+          items: buildSchemaObject(obj[key])[0]
+        }
+      }
+    }
+  }
+
+  if (initialLoop) {
+
+    //Setting root level schema data for request body.
+    var topSchemaLevel = {
+      '$schema': 'http://json-schema.org/draft-04/schema#'
+    };
+    if (obj.length) {
+      topSchemaLevel.type = 'array',
+      topSchemaLevel.items = tempObj
+    } else {
+      topSchemaLevel.type = 'object',
+      topSchemaLevel.required = Object.keys(obj),
+      topSchemaLevel.properties = tempObj
+    }
+  } else {
+    topSchemaLevel = tempObj;
+  }
+  return topSchemaLevel;
 }
