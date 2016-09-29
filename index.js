@@ -145,15 +145,19 @@ function findBaseUrl() {
  */
 function setSwaggerHost() {
   //Find & remove protocol (http, ftp, etc.) and get domain
-  if (commonUrl.indexOf("://") > -1) {
-      hostUrl = commonUrl.split('/')[2];
-  }
-  else {
-      hostUrl = commonUrl.split('/')[0];
-  }
-  //find & remove port number
-  hostUrl = hostUrl.split(':')[0];
+  if (commonUrl.length === 0) {
+    hostUrl = '';
+  } else {
+    if (commonUrl.indexOf("://") > -1) {
+        hostUrl = commonUrl.split('/')[2];
+    }
+    else {
+        hostUrl = commonUrl.split('/')[0];
+    }
 
+    //find & remove port number
+    hostUrl = hostUrl.split(':')[0];
+  }
   if (requestOptions.host) {
     newSwaggerDocument.host = requestOptions.host;
   } else {
@@ -181,9 +185,10 @@ function setSwaggerPaths() {
     
     //Set variable equal to request for this iteration from Postman file.
     var activePostmanRequest = postmanDocument.requests[request];
+    var tempPath = '';
 
     //Getting path to set in swagger paths object.
-    var tempPath = activePostmanRequest.url.replace(commonUrl, '');
+    tempPath = activePostmanRequest.url.replace(commonUrl, '')
 
     //Strip params
     var tempParams = getUrlVars(tempPath);
@@ -323,6 +328,9 @@ function sharedSubString(array){
  */
 function sharedSegments(array){
   var sortedArray = array.concat().sort();
+  if (array.length === 1) {
+    return '';
+  }
   for (var uri = 0; uri < sortedArray.length; uri++) {
     sortedArray[uri] = sortedArray[uri].split('/');
   }
@@ -364,17 +372,6 @@ function getUrlVars(path) {
 
 function buildSchemaObject(obj, initialLoop) {
 
-  /* Base object created */
-  /*
-  {
-    type:
-    !example
-    !format
-    !properties
-    !required
-    !items
-  }
-  */
   var tempObj = {};
 
   //Looping through keys of object to build properties object.

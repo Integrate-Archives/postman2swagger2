@@ -1,3 +1,10 @@
+<a name="1.0.0-pa.3"></a>
+# 1.0.0-pa.3 (2016-09-29)
+
+## Updates
+
+- Added logic to handle Postman files with only one request in them
+
 <a name="1.0.0-pa.2"></a>
 # 1.0.0-pa.2 (2016-09-29)
 

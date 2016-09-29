@@ -1,6 +1,6 @@
 {
   "name": "postman2swagger2",
-  "version": "1.0.0-pa.2",
+  "version": "1.0.0-pa.3",
   "description": "Transform Postman Collection JSON to Swagger v2 JSON",
   "keywords": [
     "API",
