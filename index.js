@@ -213,6 +213,7 @@ function setSwaggerPaths() {
     newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].summary = activePostmanRequest.description;
     newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].operationId = activePostmanRequest.name + '_';
     newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces = [];
+    //newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].consumes = [];
 
     //Get content type if available.
     activePostmanRequest.headers.replace('\n', '').replace('\r', '');
@@ -221,6 +222,7 @@ function setSwaggerPaths() {
     if (contentTypeIndex >= 0) {
       var contentTypeValue = headersArray[(contentTypeIndex + 1)];
       newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces.push(contentTypeValue);
+      //newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].consumes.push(contentTypeValue); 
     }
 
     //Set parameters if any were found in path.
@@ -248,9 +250,182 @@ function setSwaggerPaths() {
     
     //Set security property on swagger JSON.
     newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].security = [];
+
+    function buildPropertiesObject(obj) {
+
+      /* Base object created */
+      /*
+      {
+        type:
+        !example
+        !format
+        !properties
+        !items
+      }
+
+
+      */
+      var tempObj = {};
+
+      //Looping through keys of object to build properties object.
+      for (var key in obj) {
+
+        //Setting string type.
+        if (typeof obj[key] === 'string') {
+          tempObj.key = {
+            type: 'string',
+            example: obj[key]
+          }
+
+        //Setting number type.
+        } else if (typeof obj[key] === 'number') {
+          tempObj.key = {
+            type: 'integer',
+            format: 'int64'
+          }
+
+        //Setting null type.
+        } else if (typeof obj[key] === null) {
+          tempObj.key = {
+            type: 'null'
+          }
+  
+        //Setting array and object type.
+        } else if (typeof obj[key] === 'object') {
+
+          //Object vs. Array check.
+          if (obj[key].length === undefined) {
+
+            //If object call buildPropertiesObject recursively.
+            tempObj.key = {
+              type: 'object',
+              properties: buildPropertiesObject(obj[key]) 
+            }
+          } else {
+            tempObj.key = {
+              type: 'array',
+              items: {}
+            }
+
+            //Setting different array item types.
+            var itemType = typeof obj[key][0];
+
+            //Checking if array items are objects
+            if (itemType === 'object' && obj[key].length === undefined) {
+              tempObj.key.items = {
+                type: 'object',
+                properties: buildPropertiesObject(obj[key][0]) 
+              };
+
+            //Checking if array of strings
+            } else if (itemType === 'string') {
+            tempObj.key = {
+              type: 'string',
+              example: obj[key][0]
+            }
+
+          //Checking if array of numbers
+          } else if (itemType === 'number') {
+            tempObj.key = {
+              type: 'integer',
+              example: 'int64'
+            }
+          } else if (itemType === 'null') {
+            tempObj.key = {
+              type: 'null'
+            }
+          }
+        }
+      }
+      return tempObj;
+    }
+
+    //Set body parameter.
+    //TODO(jcarter): Need to support other content types beside application/json.
+    /**
+     * Assumptions being made:
+     * All parent level properties are required.
+     * No enums or descriptions for any properties are created.
+     */
+    if (activePostmanRequest.rawModeData && (newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces.indexOf('application/json') >= 0)) {
+      var bodyData = JSON.parse(activePostmanRequest.rawModeData);
+      console.log('object keys ', Object.keys(bodyData));
+      buildPropertiesObject(bodyData);
+
+      /*
+      array
+      A JSON array.
+      boolean
+      A JSON boolean.
+      integer
+      A JSON number without a fraction or exponent part.
+      number
+      Any JSON number. Number includes integer.
+      null
+      The JSON null value.
+      object
+      A JSON object.
+      string
+      A JSON string.
+      */
+      var bodyParam = {
+          "in": "body",
+          "name": "body",
+          "description": "",
+          "required": true,
+          "schema": {
+            "type": "object",
+            "required": Object.keys(bodyData),
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "category": {
+                    "$ref": "#/definitions/Category"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "doggie"
+                },
+                "photoUrls": {
+                    "type": "array",
+                    "xml": {
+                        "name": "photoUrl",
+                        "wrapped": true
+                    },
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "xml": {
+                        "name": "tag",
+                        "wrapped": true
+                    },
+                    "items": {
+                        "$ref": "#/definitions/Tag"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "description": "pet status in the store",
+                    "enum": [
+                        "available",
+                        "pending",
+                        "sold"
+                    ]
+                }
+            },
+            "xml": {
+                "name": "Pet"
+            }
+        }
+      }
+    }
   }
 }
-
 
 //Helper Functions//
 
