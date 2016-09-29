@@ -10,7 +10,7 @@ Program
   .description('Convert API descriptions from Postman to Swagger.')
   .option('-e, --environment <environment>', 'Specifies Postman Environment to use for dynamic values in Postman file.')
   .option('-h, --host <host>', 'Specifies global host.')
-  .option('-t, --tests', 'Pull data in from Postman tests.')  
+  .option('-o, --out <out>', 'Specify the path and filename you want to output your swagger document to. Defaults to "./swagger2.json"')
   .arguments('<URL|filename>')
   .action(main)
   .parse(process.argv);
@@ -20,6 +20,7 @@ function main(url) {
         url: url,
         environment: Program.environment || null,
         host: Program.host || null,
-        useTests: Program.tests
+        useTests: Program.tests,
+        outPut: Program.out || './swagger2.json'
     });
 }

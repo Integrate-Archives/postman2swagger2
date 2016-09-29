@@ -2,8 +2,6 @@
 
 var fs = require('fs');
 var path = require('path');
-var uglifyjs = require('uglify-js');
-var swaggerBaseObject = require('./lib/swagger.js');
 
 var Converter = module.exports = {};
 
@@ -39,6 +37,9 @@ Converter.convert = function(options, callback) {
     } else {
       convertToPostman(postmanDocument);
     }
+    fs.writeFile(requestOptions.outPut, JSON.stringify(newSwaggerDocument), 'utf8', function() {
+      //successfull file write.
+    });
     
   });
 }
@@ -98,10 +99,7 @@ function convertToPostman(data) {
   setSwaggerHost();
   setSwaggerBasePath();
   setSwaggerPaths();
-  //console.log('Swagger Object ', newSwaggerDocument);
-
 }
-
 
 /**
  * Set the swagger verison in JSON.
@@ -170,104 +168,92 @@ function setSwaggerBasePath() {
   newSwaggerDocument.basePath = basePath = commonUrl.replace(hostUrl, '').replace('http://','').replace('https://','').replace('www.','');
 }
 
+/**
+ * Set the swagger paths.
+ */
 function setSwaggerPaths() {
+
+  //Set paths to empty object.
   newSwaggerDocument.paths = {};
-  var count = 0;
+
+  //Loop through requests from Postman file.
   for (var request = 0; request < postmanDocument.requests.length; request++) {
-    //console.log('Saved paths: ', postmanDocument.requests[request].url.replace(commonUrl, ''));
-    var tempPath = postmanDocument.requests[request].url.replace(commonUrl, '');
+    
+    //Set variable equal to request for this iteration from Postman file.
+    var activePostmanRequest = postmanDocument.requests[request];
+
+    //Getting path to set in swagger paths object.
+    var tempPath = activePostmanRequest.url.replace(commonUrl, '');
+
+    //Strip params
+    var tempParams = getUrlVars(tempPath);
+
+    tempPath = tempPath.split('?')[0];
 
     //Checking to see if entry already exists for this path.
     if (newSwaggerDocument.paths['/' + tempPath] === undefined) {
       newSwaggerDocument.paths['/' + tempPath] = {};
+    } else {
+
+      //TODO(jcarter): Need to do a graceful merge of information.
+      continue;
     }
 
     //Checking to see if method entry already exists for this path.
-    if (newSwaggerDocument.paths['/' + tempPath][postmanDocument.requests[request].method.toLowerCase()] === undefined) {
-      newSwaggerDocument.paths['/' + tempPath][postmanDocument.requests[request].method.toLowerCase()] = {};
+    if (newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()] === undefined) {
+      newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()] = {};
     } else {
-      //TODO(jcarter): Logic to gracefully merge requests and check for different response code types.
+  
+      //TODO(jcarter): Need to do a graceful merge of information.
+      continue;
     }
 
-    /*
-			id: "03168e23-32a3-5c23-b0b1-b94bcfddcada",
-			headers: "Authorization: dev|{{singleUser}}\nContent-Type: application/json\n",
-			url: "{{baseUrl}}/api/organizations/{{singleOrg}}/files/{{singleFile}}",
-			preRequestScript: "",
-			pathVariables: {},
-			method: "POST",
-			data: [],
-			dataMode: "raw",
-			version: 2,
-			currentHelper: "normal",
-			helperAttributes: {},
-			time: 1474912195608,
-			name: "Move A File with Extra Body Properties copy",
-			description: "Move file with extra properties on request.",
-			collectionId: "0d314be7-6067-c3ff-34a7-02adbd79a504",
-			rawModeData: "{\n    \"newParentId\":\"{{orgSharedFolder}}\",\n    \"starWars\": \"Luke Skywalker\"\n}"
-		};
-    */
+    //TODO(jcarter): Set tags option in CLI?
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].tags = [];
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].summary = activePostmanRequest.description;
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].operationId = activePostmanRequest.name + '_';
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces = [];
 
-    /*
-    {
-        "tags": ["Asset Management"],
-        "summary": "Retrieve all folders a user has access too in regards to their current Organization.",
-        "operationId": "Retrieve All Folders_",
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "required": false,
-            "x-is-map": false,
-            "type": "string"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "x-is-map": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "take",
-            "in": "query",
-            "required": false,
-            "x-is-map": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "sortBy",
-            "in": "query",
-            "required": false,
-            "x-is-map": false,
-            "type": "string"
-          },
-          {
-            "name": "isAscending",
-            "in": "query",
-            "required": false,
-            "x-is-map": false,
-            "type": "boolean"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": []
+    //Get content type if available.
+    activePostmanRequest.headers.replace('\n', '').replace('\r', '');
+    var headersArray = activePostmanRequest.headers.match(/("[^"]+"|[^"\s]+)/g);
+    var contentTypeIndex = headersArray.indexOf("Content-Type:");
+    if (contentTypeIndex >= 0) {
+      var contentTypeValue = headersArray[(contentTypeIndex + 1)];
+      newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].produces.push(contentTypeValue);
+    }
+
+    //Set parameters if any were found in path.
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].parameters = [];
+    if (Object.keys(tempParams).length > 0) {
+      for (var param in tempParams) {
+        var parameterObject = {
+          name: param,
+          in: 'query',
+          required: true,
+          'x-is-map': false,
+          type: 'string'
+        }
+        newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].parameters.push(parameterObject);
       }
-    */
+    }
+
+    //Set response on swagger JSON.
+    //TODO(jcarter): I would really like to parse the test JS file in the Postman JSON to get reponse body and status code.
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].responses = {
+      '200': {
+        description: ''
+      }
+    };
+    
+    //Set security property on swagger JSON.
+    newSwaggerDocument.paths['/' + tempPath][activePostmanRequest.method.toLowerCase()].security = [];
   }
 }
 
-//Helper Functions
+
+//Helper Functions//
+
 /**
  * Find the longest shared sub string to strip out common parts of request URLs
  * 
@@ -283,4 +269,25 @@ function sharedSubString(array){
     i++;
   }
   return firstString.substring(0, (i - 1));
+}
+
+/**
+ * Get parameters from path.
+ * 
+ * @param {string} path Path that we are parsing for params.
+ * @return {objcet} Key value pair of params.
+ */
+function getUrlVars(path) {
+    var vars = {};
+    var hash;
+    if (path.indexOf('?') >= 0) {
+      var hashes = path.slice(path.indexOf('?') + 1).split('&');
+      for (var i = 0; i < hashes.length; i++) {
+        hash = hashes[i].split('=');
+        vars[hash[0]] = hash[1];
+      }
+      return vars;
+    } else {
+      return false;
+    }
 }

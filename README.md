@@ -3,6 +3,8 @@ Convert Postman JSON (version 1) to Swagger version 2 JSON
 
 **Currently only supports Postman Collection Version 1 JSON, version 2 support coming soon**
 
+### We are in Pre-Alpha release phases. What does Pre-Alpha mean? During Pre-Alpha we hope to learn and improve on our tools design, development, requirements, and testing.
+
 ## Installation
 
 ```bash
