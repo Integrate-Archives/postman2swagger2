@@ -1,3 +1,10 @@
+<a name="1.0.0-pa.4"></a>
+# 1.0.0-pa.4 (2016-10-03)
+
+## Updates
+
+- Generate headers parameters for Swagger documentation
+
 <a name="1.0.0-pa.3"></a>
 # 1.0.0-pa.3 (2016-09-29)
 

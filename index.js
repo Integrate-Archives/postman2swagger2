@@ -214,7 +214,10 @@ function setSwaggerPaths() {
     newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].summary = activePostmanRequest.description;
     newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].operationId = activePostmanRequest.name + '_';
     newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].produces = [];
-    //newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].consumes = [];
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].consumes = [];
+
+    //Set Headers for request.
+
 
     //Get content type if available.
     activePostmanRequest.headers.replace('\n', '').replace('\r', '');
@@ -223,11 +226,33 @@ function setSwaggerPaths() {
     if (contentTypeIndex >= 0) {
       var contentTypeValue = headersArray[(contentTypeIndex + 1)];
       newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].produces.push(contentTypeValue);
-      //newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].consumes.push(contentTypeValue); 
+      newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].consumes.push(contentTypeValue); 
+    }
+
+    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].parameters = [];
+
+    //Set headers for request
+    /* 
+     * All headers found are set to required by default.
+     * All header types are set to string by default.
+     */
+    for (var header = 0; header < headersArray.length; header++) {
+      var headerObject = {}
+
+      //searching for key in header array.
+      if (headersArray[header].endsWith(':')) {
+        headerObject = {
+          name: headersArray[header].substring(0, (headersArray[header].length - 1)),
+          in: 'header',
+          description: '',
+          required: true,
+          type: 'string'
+        }
+        newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].parameters.push(headerObject);  
+      }
     }
 
     //Set parameters if any were found in path.
-    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].parameters = [];
     if (Object.keys(tempParams).length > 0) {
       for (var param in tempParams) {
         var parameterObject = {
