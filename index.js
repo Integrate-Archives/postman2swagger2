@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var path = require('path');
+var schemaGenerator = require('json2schema');
 
 var Converter = module.exports = {};
 
@@ -289,33 +290,12 @@ function setSwaggerPaths() {
         (newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].produces.indexOf('application/json') >= 0)) {
       var bodyData = JSON.parse(activePostmanRequest.rawModeData);
 
-      /*
-      array
-      A JSON array.
-      boolean
-      A JSON boolean.
-      integer
-      A JSON number without a fraction or exponent part.
-      number
-      Any JSON number. Number includes integer.
-      null
-      The JSON null value.
-      object
-      A JSON object.
-      string
-      A JSON string.
-      */
       var bodyParam = {
         "in": "body",
         "name": "body",
         "description": "",
         "required": true,
-        // "schema": {
-        //   "type": "object",
-        //   "required": Object.keys(bodyData),
-        //   "properties": buildPropertiesObject(bodyData)
-        // }
-        "schema": buildSchemaObject(bodyData, true)
+        "schema": schemaGenerator.convert({data: bodyData})
         
       }
 
@@ -393,74 +373,4 @@ function getUrlVars(path) {
     } else {
       return false;
     }
-}
-
-function buildSchemaObject(obj, initialLoop) {
-
-  var tempObj = {};
-
-  //Looping through keys of object to build properties object.
-  for (var key in obj) {
-
-    //Setting string type.
-    if (typeof obj[key] === 'string') {
-      tempObj[key] = {
-        type: 'string',
-        example: obj[key]
-      }
-
-    //Setting number type.
-    } else if (typeof obj[key] === 'number') {
-      tempObj[key] = {
-        type: 'integer',
-        format: 'int64'
-      }
-
-    //Setting null type.
-    } else if (obj[key] === null) {
-      tempObj[key] = {
-        type: 'null'
-      }
-
-    //Setting array and object type.
-    } else if (typeof obj[key] === 'object') {
-
-      //Set schema for object.
-      if (obj[key].length === undefined) {
-
-        //If object call buildSchemaObject recursively.
-        tempObj[key] = {
-          type: 'object',
-          properties: buildSchemaObject(obj[key]),
-          required:  Object.keys(obj[key])
-        }
-
-      //Set schema for array.
-      } else {
-        tempObj[key] = {
-          type: 'array',
-          items: buildSchemaObject(obj[key])[0]
-        }
-      }
-    }
-  }
-
-  if (initialLoop) {
-
-    //Setting root level schema data for request body.
-    var topSchemaLevel = {
-      '$schema': 'http://json-schema.org/draft-04/schema#'
-    };
-    if (obj.length) {
-      topSchemaLevel.type = 'array',
-      topSchemaLevel.items = tempObj
-    } else {
-      topSchemaLevel.type = 'object',
-      topSchemaLevel.required = Object.keys(obj),
-      topSchemaLevel.properties = tempObj
-    }
-  } else {
-    topSchemaLevel = tempObj;
-  }
-  return topSchemaLevel;
 }

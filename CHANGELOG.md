@@ -1,3 +1,10 @@
+<a name="1.0.0-pa.5"></a>
+# 1.0.0-pa.5 (2016-10-07)
+
+## Updates
+
+- Using json2schema module for generating JSON schema.
+
 <a name="1.0.0-pa.4"></a>
 # 1.0.0-pa.4 (2016-10-03)
 

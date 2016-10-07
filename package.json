@@ -1,6 +1,6 @@
 {
   "name": "postman2swagger2",
-  "version": "1.0.0-pa.4",
+  "version": "1.0.0-pa.5",
   "description": "Transform Postman Collection JSON to Swagger v2 JSON",
   "keywords": [
     "API",
@@ -36,6 +36,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "commander": "*"
+    "commander": "*",
+    "json2schema": "*"
   }
 }
