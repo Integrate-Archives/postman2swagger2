@@ -1,3 +1,10 @@
+<a name="1.0.0-pa.6"></a>
+# 1.0.0-pa.6 (2017-02-10)
+
+## Updates
+
+- Creating response in swagger docs based on save responses in Postman.
+
 <a name="1.0.0-pa.5"></a>
 # 1.0.0-pa.5 (2016-10-07)
 

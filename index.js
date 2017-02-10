@@ -269,11 +269,48 @@ function setSwaggerPaths() {
 
     //Set response on swagger JSON.
     //TODO(jcarter): I would really like to parse the test JS file in the Postman JSON to get reponse body and status code.
-    newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].responses = {
-      '200': {
-        description: ''
+    if (activePostmanRequest.responses && activePostmanRequest.responses.length === 0) {
+
+        //No responsed were stored in Postman request so set blank 200 response.
+        newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].responses = {
+          '200': {
+            description: ''
+          }
+        };
+
+      //Responses found in Postman Collection JSON.
+    } else if (activePostmanRequest.responses && activePostmanRequest.responses.length > 0) {
+
+      //Create responses empty object.
+      newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].responses = {};
+
+      //Create property for each status in reponse.
+      for (var response = 0; response < activePostmanRequest.responses.length; response++) {
+
+        //TODO(jcarter): Remove hard coding of application/json in example type.
+        newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].responses[activePostmanRequest.responses[response].responseCode.code] = {
+          description: activePostmanRequest.responses[response].responseCode.detail,
+          schema: schemaGenerator.convert({data: JSON.parse(activePostmanRequest.responses[response].text)}),
+          headers: buildResponseHeaders_(activePostmanRequest.responses[response].headers),
+          example: {
+            'application/json': JSON.parse(activePostmanRequest.responses[response].text)
+          }
+        }
       }
-    };
+
+      function buildResponseHeaders_(headersArray) {
+        var headersObj = {};
+        for (var header = 0; header < headersArray.length; header++) {
+          headersObj[headersArray[header].key] = {
+            description: headersArray[header].description,
+            type: typeof headersArray[header].value
+          }
+        }
+        return headersObj;
+      }
+
+
+    }
     
     //Set security property on swagger JSON.
     newSwaggerDocument.paths[tempPath][activePostmanRequest.method.toLowerCase()].security = [];
